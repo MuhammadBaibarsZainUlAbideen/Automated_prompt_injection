@@ -1,55 +1,59 @@
 import sqlite3
-import os
 
 file_name = "mydatabase1.db"
 
+#TABLE INITIALIZATION FUNCTION
 
-def tables():
+def get_connection():
     conn = sqlite3.connect(file_name)
-    cur = conn.cursor()
+    return conn
 
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS Users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT,
-        password TEXT
-    )
-    """)
-
+def init_db():
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS Users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            password TEXT,
+            account_number INTEGER,
+            balance REAL
+        )
+        """)
     conn.commit()
-    conn.close()
 
 
-def InsertingData(username, password):
-    conn = sqlite3.connect(file_name)
-    cur = conn.cursor()
+#INSERTING DATA INTO TABLES FUNCTIONS
 
-    cur.execute("""
-    INSERT INTO Users (username, password)
-    VALUES (?, ?)
-    """, (username, password))
+def add_user(username, password, account_number, balance=0.0):
+    with get_connection() as conn:
+        conn.execute("""
+            INSERT INTO Users (username, password, account_number, balance)
+            VALUES (?, ?, ?, ?)
+            """, (username, password, account_number, balance)
+        )
+        conn.commit()
 
-    conn.commit()
-    conn.close()
 
+#GETTING DATA FROM TABLES FUNCTIONS
 
-def getting_username_password():
-    conn = sqlite3.connect(file_name)
-    cur = conn.cursor()
-
-    cur.execute("SELECT * FROM Users")
-    data = cur.fetchall()
-
-    conn.close()
-
+def get_user_by_username(username):
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT id, username, account_number, balance FROM Users WHERE username = ?", (username,))
+    data = cur.fetchone()
     return data
-def delting_eveything():
-    conn = sqlite3.connect(file_name)
-    cur = conn.cursor()
-    cur.execute("DELETE FROM Users")
-    conn.commit()
-    # conn.close()
 
+def get_user_by_account_number(account_number):
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT id, username, account_number, balance FROM Users WHERE account_number = ?", (account_number,))
+    data = cur.fetchone()
+    return data
 
-
-
+def get_balance(account_number):
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT balance FROM Users WHERE account_number = ?", (account_number,))
+    data = cur.fetchone()
+    return data[0] if data else None

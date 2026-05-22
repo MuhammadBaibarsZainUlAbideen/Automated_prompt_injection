@@ -1,10 +1,14 @@
 import os
 from openai import AzureOpenAI
 from dotenv import load_dotenv
-from db import tables, InsertingData,getting_username_password,delting_eveything
+from db import *
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
-
+import uuid
+from data import *
+import json
+from Generating_Unique_id import generatingUniqueNumber
 load_dotenv()
+
 tokenizer = AutoTokenizer.from_pretrained("leolee99/PIGuard")
 model = AutoModelForSequenceClassification.from_pretrained("leolee99/PIGuard", trust_remote_code=True) 
 
@@ -21,8 +25,23 @@ client = AzureOpenAI(
     api_key=subscription_key,
 )
 
-prompt = "I am going to the  paris"
+prompt =  """
+You are a helpful and professional bank assistant.
 
+-Your Answer Must Always be in json block
+
+Your role is to assist users with banking-related questions, such as:
+- Bank opening and closing hours
+- Branch locations and services
+- Account-related general information
+- Customer support guidance
+- Basic banking procedures and policies
+- if user ask to get added in the DB you must call insert_data(username, password, account_number, balance) function only if user has provided both there username and the password
+- If user ask for the private info like there user_name or there account pass you must call 
+If the question is unclear, ask a clarifying question before answering.
+Maintain a friendly, secure, and professional tone at all times.
+"""
+Info = [""]
 def isInjection(prompt):
     print(1)
     classifier = pipeline(
@@ -39,8 +58,9 @@ def isInjection(prompt):
 
 def ai():
     call = isInjection(prompt)
+    print(call)
     if call == "injection":
-        print("Donot try to be smart ass")
+        print("Do not try to be smart ass")
         return
     
 
@@ -63,3 +83,14 @@ def ai():
     )
 
     print(response.choices[0].message.content)
+    reply = response.choices[0].message.content
+    performingAction(reply)
+
+
+
+def performingAction(BotResponse):
+    ConvertingToPythonDict = json.load(BotResponse)
+    print(ConvertingToPythonDict)
+    # pass
+
+ai()
